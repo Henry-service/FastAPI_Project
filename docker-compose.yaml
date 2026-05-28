@@ -1,0 +1,44 @@
+version: "1.0"
+
+services:
+  app:
+    container_name: blog_app
+    environment:
+      NAME: ${NAME}
+      BUILD_TAG:
+      ENV: ${ENV}
+      IS_LOCALSTACK: ${IS_LOCALSTACK}
+    env_file:
+      - .env
+    build:
+       context: .
+       dockerfile: Dockerfile
+       target: build
+    volumes:
+      - .:var/task
+      - ~/.aws:/root/.aws:ro
+    ports:
+      - "8000:8000"
+    working_dir: /var/task
+    depends_on:
+      - localstack
+      - wiremock
+
+  localstack:
+    image: localstack/localstack:4.6.0
+    environment:
+      - DEBUG=1
+      - PERSISTENCE=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    ports:
+      - "4566:4566"
+    volumes:
+      - ./volume:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  wiremock:
+    image: wiremock/wiremock:2.35.0
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./wiremock:/home/wiremock
